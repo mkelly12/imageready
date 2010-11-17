@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+	<script type="text/javascript" src="qunit.js"></script>
+	<script type="text/javascript" src="../jquery.imageready.js"></script>
+
+  <script>
+  $(document).ready(function(){
+		var timeout = 3000;
+		
+		function cacheBuster() {
+			var date = new Date();
+			return date.getTime();
+		};
+		
+		function loadRachel(callback) {
+			var $rachel = $('<img src="images/rachel.jpeg?' + cacheBuster() + '" />'),
+					src = $rachel.attr('src');
+			$('#qunit-fixture').append($rachel);
+					
+			$rachel.attr('src', '');
+			$rachel.bind('load', function(event) {
+				$rachel.unbind('load');
+				callback($rachel[0]);
+			});
+			$rachel.attr('src', src);
+		}
+    
+		test("Fire load on non-cached image", function() {
+			var $lollipop = $('<img src="images/lollipop.jpeg?' + cacheBuster() + '" />');
+			stop(timeout);
+			expect(1);
+			
+			$('#qunit-fixture').append($lollipop);
+			
+			$lollipop.imageready({
+				load: function () {
+					start();
+					equal($lollipop.height(), 500, "image is loaded as verified by height");
+				}
+			});
+		});
+		
+		test("Fire callback on cached image", function() {
+			stop(timeout);
+			expect(1);
+			
+			loadRachel(function () {
+				var $img = $('<img src="images/rachel.jpeg" />');
+				$('#qunit-fixture').append($img);
+				
+				$img.imageready( function () {
+						start();
+						equal($img.height(), 516, "image is loaded as verified by height");
+				});
+			});
+		});
+		
+		test("Run callback after changing source on cached image", function() {
+			stop(timeout);
+			expect(1);
+			
+			loadRachel(function (rachel) {
+				rachel.src = '';
+				rachel.src = 'images/rachel.jpeg';
+				// debugger;
+				$(rachel).imageready(function () {
+						start();
+						equal($(rachel).height(), 516, "image is loaded as verified by height");
+				});
+			});
+		});
+		
+		test("Run load after changing source on non-cached image", function() {
+			stop(timeout);
+			expect(1);
+			
+			loadRachel(function (rachel) {
+				rachel.src = 'images/lollipop.jpeg?' + cacheBuster();
+				$(rachel).imageready({
+					forceLoad: true,
+					load: function () {
+						start();
+						equal($(rachel).height(), 500, "image is loaded as verified by height");
+					}
+				});
+			});
+		});
+
+	});
+  </script>
+  
+</head>
+<body>
+	<h1 id="qunit-header">ImageReady Plugin</h1>
+	<h2 id="qunit-banner"></h2>
+	<div id="qunit-testrunner-toolbar"></div>
+	<h2 id="qunit-userAgent"></h2>
+	<ol id="qunit-tests"></ol>
+	<div id="qunit-fixture"></div>
+</body>
+</html>
